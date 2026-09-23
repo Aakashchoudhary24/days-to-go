@@ -2,44 +2,37 @@
 
 import React from "react";
 import { formatDeadlineFull, formatClock } from "@/lib/countdown/calculations";
-import type { CountdownStatus } from "@/lib/countdown/types";
+import type { Countdown, Priority, RemainingTime } from "@/lib/countdown/types";
+
+export type TileVariant = "full" | "half" | "quarter";
 
 interface CountdownTileProps {
-  countdown: {
-    id: string;
-    name: string;
-    deadline: string;
-    priority: "low" | "medium" | "high";
-    createdAt: string;
-    archived?: boolean;
-  };
-  remaining: {
-    calendarDays: number;
-    days: number;
-    hours: number;
-    minutes: number;
-    seconds: number;
-    totalMs: number;
-    status: CountdownStatus;
-  };
-  isPinned: boolean;
-  isSelected: boolean;
-  onSelect: () => void;
-  onPin: () => void;
-  onUnpin: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  countdown: Countdown;
+  remaining: RemainingTime;
+  variant: TileVariant;
+  onEdit?: () => void;
+  onUnpin?: () => void;
+  onDelete?: () => void;
 }
+
+const NUMBER_SIZE: Record<TileVariant, string> = {
+  full: "text-[min(30vw,44vh)]",
+  half: "text-[min(21vw,32vh)]",
+  quarter: "text-[min(13vw,20vh)]",
+};
+
+const PRIORITY_OPACITY: Record<Priority, string> = {
+  low: "bg-black/15",
+  medium: "bg-black/45",
+  high: "bg-black",
+};
 
 export function CountdownTile({
   countdown,
   remaining,
-  isPinned,
-  isSelected,
-  onSelect,
-  onPin,
-  onUnpin,
+  variant,
   onEdit,
+  onUnpin,
   onDelete,
 }: CountdownTileProps) {
   const { calendarDays, status } = remaining;
@@ -48,62 +41,61 @@ export function CountdownTile({
   const isPast = status === "past";
 
   const dayLabel = isPast ? "DAY LATE" : isToday ? "TODAY" : calendarDays === 1 ? "DAY TO GO" : "DAYS TO GO";
-  const displayDays = isPast ? Math.abs(calendarDays) : calendarDays;
+  const displayDays = isPast ? `+${calendarDays}` : calendarDays;
 
   return (
-    <div
-      className={`
-        relative flex flex-col items-center justify-center p-8 min-h-[300px]
-        border border-black/5 transition-all duration-300
-        ${isPinned ? "flex-1" : ""}
-        ${isSelected ? "bg-black/2" : "hover:bg-black/1"}
-      `}
-      onClick={onSelect}
-    >
-      <div className="absolute top-3 left-3 right-3 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={e => { e.stopPropagation(); onEdit(); }}
-          className="px-2 py-1 text-xs font-light text-black/40 hover:text-black"
-          aria-label="Edit"
-        >
-          Edit
-        </button>
-        <button
-          onClick={e => { e.stopPropagation(); if (isPinned) onUnpin(); else onPin(); }}
-          className="px-2 py-1 text-xs font-light text-black/40 hover:text-black"
-          aria-label={isPinned ? "Unpin" : "Pin"}
-        >
-          {isPinned ? "Unpin" : "Pin"}
-        </button>
+    <div className="relative flex flex-col items-center justify-center flex-1 px-4 py-8 overflow-hidden">
+      <div className="absolute top-3 right-4 flex items-center gap-3">
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="text-[11px] font-light uppercase tracking-wider text-black/25 hover:text-black transition-colors"
+          >
+            Edit
+          </button>
+        )}
+        {onUnpin && (
+          <button
+            type="button"
+            onClick={onUnpin}
+            className="text-[11px] font-light uppercase tracking-wider text-black/25 hover:text-black transition-colors"
+          >
+            Unpin
+          </button>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-[11px] font-light uppercase tracking-wider text-black/25 hover:text-black transition-colors"
+            aria-label="Delete"
+          >
+            ×
+          </button>
+        )}
       </div>
 
-      <div className="text-center">
-        <p className="text-xs font-medium uppercase tracking-widest text-black/40 mb-4">
+      <div className="flex flex-col items-center text-center">
+        <span className={`w-6 h-px mb-6 ${PRIORITY_OPACITY[countdown.priority]}`} aria-hidden="true" />
+        <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/45 mb-6">
           {countdown.name}
         </p>
-        <p className="font-mono text-6xl md:text-8xl font-light tracking-tight text-black">
+        <p
+          className={`font-mono font-extralight leading-none tracking-tight text-black ${NUMBER_SIZE[variant]}`}
+        >
           {displayDays}
         </p>
-        <p className="text-xs font-medium uppercase tracking-wider text-black/40 mt-2">
+        <p className="text-xs font-medium uppercase tracking-[0.25em] text-black/45 mt-5">
           {dayLabel}
         </p>
-        <p className="font-mono text-lg font-light text-black/30 mt-4">
+        <p className="font-mono text-base md:text-lg font-light text-black/45 mt-6">
           {formatClock(remaining.days, remaining.hours, remaining.minutes, remaining.seconds, remaining.status)}
         </p>
-        <p className="text-xs font-light text-black/30 mt-2">
+        <p className="text-xs font-light uppercase tracking-[0.2em] text-black/30 mt-3">
           {deadlineStr}
         </p>
       </div>
-
-      {!isPinned && (
-        <button
-          onClick={e => { e.stopPropagation(); onDelete(); }}
-          className="absolute bottom-3 right-3 p-1 text-black/20 hover:text-black/60 transition-colors"
-          aria-label="Delete"
-        >
-          ×
-        </button>
-      )}
     </div>
   );
 }

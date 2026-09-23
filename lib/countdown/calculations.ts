@@ -17,8 +17,7 @@ export function calendarDaysBetween(from: Date, to: Date): number {
   return Math.round((b - a) / MS_PER_DAY);
 }
 
-export function getRemainingTime(countdown: Countdown): RemainingTime {
-  const now = new Date();
+export function getRemainingTime(countdown: Countdown, now: Date = new Date()): RemainingTime {
   const target = parseDeadline(countdown.deadline);
   const totalMs = target.getTime() - now.getTime();
   const calendarDays = calendarDaysBetween(now, target);

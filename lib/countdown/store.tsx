@@ -5,32 +5,27 @@ import React, {
   useContext,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useCallback,
 } from "react";
 import type { Countdown, Priority, RemainingTime } from "./types";
-import { saveCountdowns } from "./storage";
+import {
+  loadCountdowns,
+  saveCountdowns,
+  loadPinnedIds,
+  savePinnedIds,
+} from "./storage";
 import { getRemainingTime } from "./calculations";
+
+const MAX_PINNED = 4;
 
 function makeId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
   }
   return "id-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
-function loadInitialCountdowns(): Countdown[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem("days-to:v1");
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
-  } catch {
-    return [];
-  }
 }
 
 interface DaysToContext {
@@ -72,50 +67,48 @@ export function DaysToProvider({ children }: { children: React.ReactNode }) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingCountdownId, setEditingCountdownId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [remainingTimes, setRemainingTimes] = useState<Map<string, RemainingTime>>(new Map());
   const [hydrated, setHydrated] = useState(false);
-  const tickRef = useRef<number | null>(null);
-  const firstTickRef = useRef(true);
+  const [now, setNow] = useState<Date>(() => new Date());
   const initializedRef = useRef(false);
 
   useLayoutEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
-    const loaded = loadInitialCountdowns();
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only localStorage init
-    setCountdowns(loaded);
-    if (loaded.length > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only localStorage init
-      setSelectedCountdownId(loaded[0].id);
+    const stored = loadCountdowns();
+    const active = stored.filter(c => !c.archived);
+    let pinned = loadPinnedIds().filter(id => stored.some(c => c.id === id));
+    if (active.length > 0 && pinned.length === 0) {
+      pinned = active.slice(0, MAX_PINNED).map(c => c.id);
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only localStorage init
+    setCountdowns(stored);
+    setPinnedCountdownIds(pinned);
+    if (active.length > 0) {
+      setSelectedCountdownId(active[0].id);
+    }
     setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
     saveCountdowns(countdowns);
-  }, [countdowns, hydrated]);
-
-  const tick = useCallback(() => {
-    const map = new Map<string, RemainingTime>();
-    for (const c of countdowns) {
-      map.set(c.id, getRemainingTime(c));
-    }
-    setRemainingTimes(map);
-  }, [countdowns]);
+    savePinnedIds(pinnedCountdownIds);
+  }, [countdowns, pinnedCountdownIds, hydrated]);
 
   useEffect(() => {
     if (!hydrated) return;
-    if (firstTickRef.current) {
-      firstTickRef.current = false;
-      tick();
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, [hydrated]);
+
+  const remainingTimes = useMemo(() => {
+    const map = new Map<string, RemainingTime>();
+    for (const c of countdowns) {
+      if (!c.archived) {
+        map.set(c.id, getRemainingTime(c, now));
+      }
     }
-    tickRef.current = window.setInterval(tick, 1000);
-    return () => {
-      if (tickRef.current) clearInterval(tickRef.current);
-    };
-  }, [tick, hydrated]);
+    return map;
+  }, [countdowns, now]);
 
   const showNotice = useCallback((msg: string) => {
     setNotice(msg);
@@ -130,14 +123,13 @@ export function DaysToProvider({ children }: { children: React.ReactNode }) {
       priority: input.priority,
       createdAt: new Date().toISOString(),
     };
-    setCountdowns(prev => {
-      const next = [...prev, newCountdown];
-      setSelectedCountdownId(newCountdown.id);
-      if (prev.length === 0) {
-        setPinnedCountdownIds([newCountdown.id]);
-      }
-      return next;
+    setCountdowns(prev => [...prev, newCountdown]);
+    setPinnedCountdownIds(prev => {
+      if (prev.includes(newCountdown.id)) return prev;
+      if (prev.length >= MAX_PINNED) return prev;
+      return [...prev, newCountdown.id];
     });
+    setSelectedCountdownId(newCountdown.id);
     setIsCreating(false);
   }, []);
 
@@ -146,23 +138,23 @@ export function DaysToProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteCountdown = useCallback((id: string) => {
-    setCountdowns(prev => {
-      const next = prev.filter(c => c.id !== id);
-      setSelectedCountdownId(next[0]?.id ?? null);
-      setPinnedCountdownIds(p => p.filter(pid => pid !== id));
-      return next;
+    const next = countdowns.filter(c => c.id !== id);
+    setCountdowns(next);
+    setPinnedCountdownIds(prev => prev.filter(pid => pid !== id));
+    setSelectedCountdownId(prev => {
+      if (prev !== id) return prev;
+      return next.find(c => !c.archived)?.id ?? null;
     });
-  }, []);
+  }, [countdowns]);
 
   const archiveCountdown = useCallback((id: string) => {
-    setCountdowns(prev => {
-      const next = prev.map(c => (c.id === id ? { ...c, archived: true } : c));
-      const nextUnarchived = next.filter(c => !c.archived);
-      setSelectedCountdownId(nextUnarchived[0]?.id ?? null);
-      setPinnedCountdownIds(p => p.filter(pid => pid !== id));
-      return next;
+    setCountdowns(prev => prev.map(c => (c.id === id ? { ...c, archived: true } : c)));
+    setPinnedCountdownIds(prev => prev.filter(pid => pid !== id));
+    setSelectedCountdownId(prev => {
+      if (prev !== id) return prev;
+      return countdowns.find(c => c.id !== id && !c.archived)?.id ?? null;
     });
-  }, []);
+  }, [countdowns]);
 
   const restoreCountdown = useCallback((id: string) => {
     setCountdowns(prev => prev.map(c => (c.id === id ? { ...c, archived: false } : c)));
@@ -173,15 +165,17 @@ export function DaysToProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const pinCountdown = useCallback((id: string) => {
+    if (pinnedCountdownIds.includes(id)) return;
+    if (pinnedCountdownIds.length >= MAX_PINNED) {
+      showNotice("Maximum 4 countdowns on stage");
+      return;
+    }
     setPinnedCountdownIds(prev => {
       if (prev.includes(id)) return prev;
-      if (prev.length >= 4) {
-        showNotice("Maximum 4 countdowns on stage");
-        return prev;
-      }
+      if (prev.length >= MAX_PINNED) return prev;
       return [...prev, id];
     });
-  }, [showNotice]);
+  }, [pinnedCountdownIds, showNotice]);
 
   const unpinCountdown = useCallback((id: string) => {
     setPinnedCountdownIds(prev => prev.filter(pid => pid !== id));

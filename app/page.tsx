@@ -1,14 +1,12 @@
 "use client";
 
 import React from "react";
-import { DaysToProvider } from "@/lib/countdown/store";
+import { DaysToProvider, useDaysTo } from "@/lib/countdown/store";
 import { Header } from "@/components/header";
 import { CountdownStage } from "@/components/countdown-stage";
 import { CountdownRail } from "@/components/countdown-rail";
 import { CountdownCreator } from "@/components/countdown-creator";
-import { EmptyState } from "@/components/empty-state";
 import { CountdownEditor } from "@/components/countdown-editor";
-import { useDaysTo } from "@/lib/countdown/store";
 
 function AppContent() {
   const {
@@ -20,13 +18,16 @@ function AppContent() {
   } = useDaysTo();
 
   const editingCountdown = countdowns.find(c => c.id === editingCountdownId);
+  const hasCountdowns = countdowns.length > 0;
+  // With zero countdowns, the creation flow IS the page.
+  const showCreator = !hasCountdowns || isCreating;
 
   return (
     <div className="relative min-h-screen bg-white flex flex-col">
       <Header />
       <div className="flex-1 flex relative">
         <CountdownRail />
-        <main className="flex-1 flex flex-col ml-16">
+        <main className={`flex-1 flex flex-col ${hasCountdowns ? "pb-16 md:ml-16 md:pb-0" : ""}`}>
           <CountdownStage />
         </main>
       </div>
@@ -41,11 +42,10 @@ function AppContent() {
         </div>
       )}
 
-      {isCreating && <CountdownCreator />}
+      {showCreator && <CountdownCreator />}
       {editingCountdown && (
         <CountdownEditor countdown={editingCountdown} onClose={cancelEditing} />
       )}
-      {countdowns.length === 0 && !isCreating && <EmptyState />}
     </div>
   );
 }

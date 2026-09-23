@@ -5,11 +5,27 @@ import { useDaysTo } from "@/lib/countdown/store";
 import { DatePicker } from "./date-picker";
 import { PrioritySelector } from "./priority-selector";
 
-function CountdownCreatorInner({ onClose }: { onClose: () => void }) {
+type Priority = "low" | "medium" | "high";
+
+function todayString(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function CountdownCreatorInner({
+  onClose,
+  closable,
+}: {
+  onClose: () => void;
+  closable: boolean;
+}) {
   const { addCountdown } = useDaysTo();
   const [name, setName] = useState("");
-  const [deadline, setDeadline] = useState(() => new Date().toISOString().split("T")[0]);
-  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [deadline, setDeadline] = useState("");
+  const [priority, setPriority] = useState<Priority>("medium");
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Partial<Record<"name" | "deadline", string>>>({});
 
@@ -23,6 +39,7 @@ function CountdownCreatorInner({ onClose }: { onClose: () => void }) {
 
   const handleNext = () => {
     if (validateStep()) {
+      if (step === 0 && !deadline) setDeadline(todayString());
       setStep(s => s + 1);
     }
   };
@@ -35,7 +52,6 @@ function CountdownCreatorInner({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     if (!name.trim() || !deadline) return;
     addCountdown({ name: name.trim(), deadline, priority });
-    onClose();
   };
 
   return (
@@ -61,7 +77,7 @@ function CountdownCreatorInner({ onClose }: { onClose: () => void }) {
           {step === 1 && (
             <div>
               <h1 className="text-2xl font-light tracking-tight mb-8">When does it end?</h1>
-              <DatePicker value={deadline} onChange={setDeadline} />
+              <DatePicker value={deadline} onChange={setDeadline} invalid={!!errors.deadline} />
               {errors.deadline && <p className="mt-2 text-sm text-black/40">{errors.deadline}</p>}
             </div>
           )}
@@ -98,19 +114,21 @@ function CountdownCreatorInner({ onClose }: { onClose: () => void }) {
               className="text-sm font-medium tracking-wider text-black"
               disabled={!name.trim() || !deadline}
             >
-              Create
+              Create →
             </button>
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-6 right-6 text-xl font-light text-black/30 hover:text-black/60"
-          aria-label="Close"
-        >
-          ×
-        </button>
+        {closable && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-6 right-6 text-xl font-light text-black/30 hover:text-black/60"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        )}
       </form>
     </div>
   );
@@ -118,13 +136,14 @@ function CountdownCreatorInner({ onClose }: { onClose: () => void }) {
 
 export function CountdownCreator() {
   const { isCreating, cancelCreating, countdowns } = useDaysTo();
-
+  const closable = isCreating && countdowns.length > 0;
   if (!isCreating && countdowns.length > 0) return null;
 
   return (
     <CountdownCreatorInner
-      key={isCreating ? "open" : "closed"}
+      key={isCreating ? "open" : "empty"}
       onClose={cancelCreating}
+      closable={closable}
     />
   );
 }
