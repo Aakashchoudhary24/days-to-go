@@ -48,15 +48,14 @@ function CountdownCreatorInner({
     setStep(s => Math.max(0, s - 1));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreate = () => {
     if (!name.trim() || !deadline) return;
     addCountdown({ name: name.trim(), deadline, priority });
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-white">
-      <form onSubmit={handleSubmit} className="w-full max-w-md">
+      <div className="w-full max-w-md">
         <div className="space-y-12">
           {step === 0 && (
             <div>
@@ -110,7 +109,8 @@ function CountdownCreatorInner({
             </button>
           ) : (
             <button
-              type="submit"
+              type="button"
+              onClick={handleCreate}
               className="text-sm font-medium tracking-wider text-black"
               disabled={!name.trim() || !deadline}
             >
@@ -129,7 +129,7 @@ function CountdownCreatorInner({
             ×
           </button>
         )}
-      </form>
+      </div>
     </div>
   );
 }
