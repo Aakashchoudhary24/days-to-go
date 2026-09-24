@@ -25,4 +25,6 @@ export interface RemainingTime {
   seconds: number;
   totalMs: number;
   status: CountdownStatus;
+  /** Fraction of the countdown lifecycle [createdAt → deadline] that has elapsed, 0–1. */
+  progress: number;
 }

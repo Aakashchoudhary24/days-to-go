@@ -54,7 +54,7 @@ function CountdownCreatorInner({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-8 bg-background">
       <div className="w-full max-w-md">
         <div className="space-y-12">
           {step === 0 && (
@@ -65,11 +65,11 @@ function CountdownCreatorInner({
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="Get in shape"
-                className="w-full px-0 py-3 text-2xl font-light bg-transparent border-none outline-none border-b border-black/10 placeholder:text-black/20 caret-black"
+                className="w-full px-0 py-3 text-2xl font-light bg-transparent border-none outline-none border-b border-foreground/10 placeholder:text-foreground/25 caret-foreground"
                 autoFocus
                 aria-invalid={!!errors.name}
               />
-              {errors.name && <p className="mt-2 text-sm text-black/40">{errors.name}</p>}
+              {errors.name && <p className="mt-2 text-sm text-foreground/60">{errors.name}</p>}
             </div>
           )}
 
@@ -77,7 +77,7 @@ function CountdownCreatorInner({
             <div>
               <h1 className="text-2xl font-light tracking-tight mb-8">When does it end?</h1>
               <DatePicker value={deadline} onChange={setDeadline} invalid={!!errors.deadline} />
-              {errors.deadline && <p className="mt-2 text-sm text-black/40">{errors.deadline}</p>}
+              {errors.deadline && <p className="mt-2 text-sm text-foreground/60">{errors.deadline}</p>}
             </div>
           )}
 
@@ -94,7 +94,7 @@ function CountdownCreatorInner({
             type="button"
             onClick={handleBack}
             disabled={step === 0}
-            className="text-sm font-light text-black/40 hover:text-black/70 disabled:opacity-30"
+            className="text-sm font-light text-foreground/55 hover:text-foreground/85 disabled:opacity-30"
           >
             ← Back
           </button>
@@ -102,7 +102,7 @@ function CountdownCreatorInner({
             <button
               type="button"
               onClick={handleNext}
-              className="text-sm font-medium tracking-wider text-black"
+              className="text-sm font-medium tracking-wider text-foreground"
               disabled={(step === 0 && !name.trim()) || (step === 1 && !deadline)}
             >
               Continue →
@@ -111,7 +111,7 @@ function CountdownCreatorInner({
             <button
               type="button"
               onClick={handleCreate}
-              className="text-sm font-medium tracking-wider text-black"
+              className="text-sm font-medium tracking-wider text-foreground"
               disabled={!name.trim() || !deadline}
             >
               Create →
@@ -123,7 +123,7 @@ function CountdownCreatorInner({
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-6 right-6 text-xl font-light text-black/30 hover:text-black/60"
+            className="absolute top-6 right-6 text-xl font-light text-foreground/45 hover:text-foreground/75"
             aria-label="Close"
           >
             ×

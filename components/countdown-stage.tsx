@@ -23,7 +23,7 @@ export function CountdownStage() {
   if (pinnedCountdowns.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-black/30 text-lg font-light">
+        <p className="text-foreground/45 text-lg font-light">
           {countdowns.length > 0 ? "Nothing on stage yet" : ""}
         </p>
       </div>
@@ -60,7 +60,7 @@ export function CountdownStage() {
 
   if (pinnedCountdowns.length === 2) {
     return (
-      <div className="flex-1 flex divide-x divide-black/10">
+      <div className="flex-1 flex divide-x divide-foreground/10">
         {renderTiles(pinnedCountdowns, "half")}
       </div>
     );
@@ -69,16 +69,16 @@ export function CountdownStage() {
   if (pinnedCountdowns.length === 3) {
     return (
       <div className="flex-1 flex">
-        {renderTiles(pinnedCountdowns.slice(0, 2), "quarter", "border-r border-black/10 divide-y divide-black/10")}
+        {renderTiles(pinnedCountdowns.slice(0, 2), "quarter", "border-r border-foreground/10 divide-y divide-foreground/10")}
         {renderTiles(pinnedCountdowns.slice(2), "half")}
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex divide-x divide-black/10">
-      {renderTiles(pinnedCountdowns.slice(0, 2), "quarter", "divide-y divide-black/10")}
-      {renderTiles(pinnedCountdowns.slice(2), "quarter", "divide-y divide-black/10")}
+    <div className="flex-1 flex divide-x divide-foreground/10">
+      {renderTiles(pinnedCountdowns.slice(0, 2), "quarter", "divide-y divide-foreground/10")}
+      {renderTiles(pinnedCountdowns.slice(2), "quarter", "divide-y divide-foreground/10")}
     </div>
   );
 }

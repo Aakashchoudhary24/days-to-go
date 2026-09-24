@@ -18,9 +18,9 @@ export function DatePicker({ value, onChange, invalid = false, className = "" }:
         onChange={e => onChange(e.target.value)}
         className={`
           w-full px-0 py-3 text-2xl font-light bg-transparent outline-none
-          border-b caret-black [color-scheme:light]
-          ${invalid ? "border-black/60" : "border-black/20 focus:border-black/60"}
-          placeholder:text-black/20
+          border-b caret-foreground [color-scheme:light] dark:[color-scheme:dark]
+          ${invalid ? "border-foreground/60" : "border-foreground/20 focus:border-foreground/60"}
+          placeholder:text-foreground/25
           transition-colors
           ${className}
         `}

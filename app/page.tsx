@@ -21,20 +21,22 @@ function AppContent() {
   const hasCountdowns = countdowns.length > 0;
   // With zero countdowns, the creation flow IS the page.
   const showCreator = !hasCountdowns || isCreating;
+  // The desktop island nav shows with >1 active countdown; reserve its gutter.
+  const hasIsland = countdowns.filter(c => !c.archived).length > 1;
 
   return (
-    <div className="relative min-h-screen bg-white flex flex-col">
+    <div className="relative min-h-screen bg-background flex flex-col">
       <Header />
       <div className="flex-1 flex relative">
         <CountdownRail />
-        <main className={`flex-1 flex flex-col ${hasCountdowns ? "pb-16 md:ml-16 md:pb-0" : ""}`}>
+        <main className={`flex-1 flex flex-col ${hasIsland ? "md:pl-24" : ""}`}>
           <CountdownStage />
         </main>
       </div>
 
       {notice && (
         <div
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 text-sm font-light text-black/60 bg-white border border-black/10"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 text-sm font-light text-foreground/70 bg-background border border-foreground/10"
           role="status"
           aria-live="polite"
         >

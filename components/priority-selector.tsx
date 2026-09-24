@@ -24,8 +24,8 @@ export function PrioritySelector({ value, onChange, className = "" }: PrioritySe
           onClick={() => onChange(p)}
           className={`px-4 py-2 text-sm uppercase tracking-wider transition-all ${
             value === p
-              ? "font-semibold text-black"
-              : "text-black/40 hover:text-black/70"
+              ? "font-semibold text-foreground"
+              : "text-foreground/55 hover:text-foreground/85"
           }`}
         >
           {p.toUpperCase()}

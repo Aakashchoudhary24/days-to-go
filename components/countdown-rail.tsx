@@ -23,7 +23,7 @@ export function CountdownRail() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-10 w-full bg-white/95 backdrop-blur border-t border-black/10 md:inset-x-auto md:top-14 md:bottom-0 md:left-0 md:w-16 md:border-t-0 md:border-r md:flex-col overflow-x-auto flex flex-row md:py-6"
+      className="hidden md:flex fixed left-5 top-1/2 -translate-y-1/2 z-10 flex-col items-stretch gap-0.5 rounded-lg border border-foreground/10 bg-background px-1.5 py-2"
       aria-label="Countdown navigation"
     >
       {active.map(c => {
@@ -39,30 +39,24 @@ export function CountdownRail() {
             aria-current={isSelected ? "true" : "false"}
             aria-label={c.name}
             className={`
-              relative shrink-0 min-w-[5.5rem] flex items-center gap-2 px-4 md:w-full md:min-w-0 md:px-3 md:py-4 md:flex-col md:items-start md:gap-1
-              border-l first:border-l-0 md:border-l-0
-              border-black/10 transition-colors
-              ${isSelected ? "bg-black/[0.04]" : "hover:bg-black/[0.03]"}
+              flex min-w-16 flex-col items-center gap-0.5 rounded-md px-2.5 py-2 transition-colors
+              ${isSelected ? "bg-foreground/5" : "hover:bg-foreground/5"}
             `}
           >
-            <span
-              className={`hidden md:block absolute left-0 top-0 bottom-0 w-0.5 ${isPinned ? "bg-black" : "bg-transparent"}`}
-              aria-hidden="true"
-            />
-            <span
-              className={`absolute top-0 left-0 right-0 h-0.5 md:hidden ${isPinned ? "bg-black" : "bg-transparent"}`}
-              aria-hidden="true"
-            />
-            <span className={`font-mono text-xs font-light ${isSelected ? "text-black" : "text-black/50"}`}>
+            <span className={`font-mono text-xs font-light ${isSelected ? "text-foreground" : "text-foreground/60"}`}>
               {dayText}
             </span>
             <span
-              className={`text-xs font-medium uppercase tracking-wider truncate max-w-[10rem] md:max-w-[6rem] ${
-                isSelected ? "text-black" : "text-black/40"
+              className={`w-full truncate text-center text-[10px] font-medium uppercase tracking-wider ${
+                isSelected ? "text-foreground/80" : "text-foreground/50"
               }`}
             >
               {c.name}
             </span>
+            <span
+              aria-hidden="true"
+              className={`mt-0.5 h-px w-5 ${isPinned ? "bg-foreground" : "bg-transparent"}`}
+            />
           </button>
         );
       })}

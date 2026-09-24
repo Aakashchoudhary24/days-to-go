@@ -17,6 +17,30 @@ export function calendarDaysBetween(from: Date, to: Date): number {
   return Math.round((b - a) / MS_PER_DAY);
 }
 
+/** Creation timestamp in ms, or null when missing/invalid (legacy data). */
+export function parseCreatedAt(createdAt: string | undefined): number | null {
+  if (!createdAt) return null;
+  const ms = new Date(createdAt).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+/**
+ * Progress through the countdown lifecycle [createdAt → deadline], scaled to 0–1.
+ * A newly created countdown starts near 0% and reaches 100% at the deadline.
+ * Past deadlines clamp to 1. If creation time is unknown, falls back to 0
+ * (the countdown is treated as just started).
+ */
+export function progressBetween(
+  createdAtMs: number | null,
+  deadlineMs: number,
+  nowMs: number,
+): number {
+  if (createdAtMs === null) return 0;
+  const span = deadlineMs - createdAtMs;
+  if (span <= 0) return 1;
+  return Math.min(1, Math.max(0, (nowMs - createdAtMs) / span));
+}
+
 export function getRemainingTime(countdown: Countdown, now: Date = new Date()): RemainingTime {
   const target = parseDeadline(countdown.deadline);
   const totalMs = target.getTime() - now.getTime();
@@ -43,7 +67,13 @@ export function getRemainingTime(countdown: Countdown, now: Date = new Date()): 
   const minutes = Math.floor((abs % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((abs % (1000 * 60)) / 1000);
 
-  return { calendarDays, days, hours, minutes, seconds, totalMs, status };
+  const progress = progressBetween(
+    parseCreatedAt(countdown.createdAt),
+    target.getTime(),
+    now.getTime(),
+  );
+
+  return { calendarDays, days, hours, minutes, seconds, totalMs, status, progress };
 }
 
 export function formatDeadlineFull(deadline: string): string {
